@@ -28,6 +28,9 @@ import java.util.Arrays;
  * @author Jochen Theodorou
  */
 public class DefaultMetaMethod implements MetaMethod {
+    public final static MethodHandle equalTargetType=null;
+    
+    
     private final MethodType signature;
     private final int modifiers;
     private final MethodHandle target;
@@ -105,5 +108,9 @@ public class DefaultMetaMethod implements MetaMethod {
 
     public MethodHandle getTarget(){
         return target;
+    }
+    
+    public MethodType getSignature() {
+        return signature;
     }
 }

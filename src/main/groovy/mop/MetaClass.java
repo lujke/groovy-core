@@ -15,7 +15,7 @@
  */
 package groovy.mop;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * <p>An interface that defines the API usable by clients of Groovy's Meta Object Protocol (MOP). These methods are
@@ -31,7 +31,7 @@ import java.util.List;
  * @author Graeme Rocher
  * @author Jochen Theodorou
  */
-public interface MetaObjectProtocol {
+public interface MetaClass {
 
     /**
      * Obtain an immutable list of all meta properties available on this meta class
@@ -39,7 +39,7 @@ public interface MetaObjectProtocol {
      * @see groovy.lang.MetaProperty
      * @return A list of MetaProperty instances
      */
-    List<MetaProperty> getMetaProperties();
+    Collection<? extends MetaProperty> getMetaProperties();
 
     /**
      * Obtain a meta property of the given name available on this meta class
@@ -55,7 +55,7 @@ public interface MetaObjectProtocol {
      * @see groovy.lang.MetaMethod
      * @return A list of MetaMethod instances
      */
-    List<MetaMethod> getMetaMethods();
+    Collection<? extends MetaMethod> getMetaMethods();
 
     /**
      * Obtain an immutable of all the meta methods with the given name available on this meta class.
@@ -69,7 +69,7 @@ public interface MetaObjectProtocol {
      * @param name The name of the method of interest
      * @return A list of MetaMethod instances
      */
-    List<MetaMethod> getMetaMethods(String name, Class... argumentTypes);
+    Collection<? extends MetaMethod> getMetaMethods(String name, Class... argumentTypes);
 
     /**
      * <p>Returns an object satisfying Groovy truth if the implementing MetaClass responds to
@@ -79,12 +79,12 @@ public interface MetaObjectProtocol {
      * @param argTypes The argument types to match against
      * @return A List of MetaMethods matching the argument types which will be empty if no matching methods exist
      */
-    List<MetaMethod> respondsTo(String name, Object... argTypes);
+    Collection<? extends MetaMethod> respondsTo(String name, Object... argTypes);
 
     /**
      * Retrieves that Java Class that the attached Meta behaviors apply to
      *
      * @return The java.lang.Class instance
      */
-    Class getTheClass();
+    Class<?> getTheClass();
 }
