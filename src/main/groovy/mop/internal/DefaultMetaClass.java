@@ -76,6 +76,10 @@ public class DefaultMetaClass {
         return methods.get(name);
     }
     
+    public Class<?> getTheClass() {
+        return theClass;
+    }
+    
     // -------------------------------------------------------------------
 
     private void computeProperties() {

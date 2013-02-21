@@ -31,7 +31,7 @@ public class DefaultRealm implements Realm {
 
     @Override
     public MetaClass getMetaClass(Class<?> theClass) {
-        return cv.get(theClass).get();
+        return new MetaClassHandle(cv.get(theClass).get());
     }
     
     public DefaultMetaClass getMetaClassInternal(Class<?> theClass) {
