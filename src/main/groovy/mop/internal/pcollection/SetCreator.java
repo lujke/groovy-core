@@ -15,16 +15,21 @@
  */
 package groovy.mop.internal.pcollection;
 
-import java.lang.invoke.MethodHandle;
 import java.util.List;
 
-public interface PSet<T> extends Iterable<T> {
-
-    boolean isEmpty();
-    PSet<T> plus(T element);
-    PSet<T> plus(PSet<T> other);
-    PSet<T> plus(PSet<T> other, MethodHandle compare);
-    PSet<T> plus(List<T> other, MethodHandle compare);
-    PSet<T> minus(T element);
-    PSet<T> minus(PSet<T> other, MethodHandle compare);
+public class SetCreator {
+    public static <T> PSet<T> create(List<T> l) {
+        if (l.isEmpty()) return EmptySet.create();
+        if (l.size()==1) {
+            return new SingleElementSet(l.get(0));
+        } else {
+            Object[] array = l.toArray();
+            return new FlatSet(array);
+        }
+    }
+    public static <T> PSet<T> create(T... l) {
+        if (l.length==0) return EmptySet.create();
+        if (l.length==1) return new SingleElementSet<T>(l[0]);
+        return new FlatSet(l);
+    }
 }
