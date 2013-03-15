@@ -54,10 +54,10 @@ public class RegionSet<T> implements PSet<T> {
     }
 
     @Override
-    public PSet<T> plus(PSet<T> other) {
+    public PSet<T> append(PSet<T> other) {
         if (other.isEmpty()) return this;
         MultiSet ms = new MultiSet(other,null);
-        return new MultiSet(other,ms);
+        return new MultiSet(this,ms);
     }
 
     @Override
@@ -66,6 +66,38 @@ public class RegionSet<T> implements PSet<T> {
         PSet<T> res = FlatSet.minus_0(elements, other, compare, offset, end);
         if (res==null) return this;
         return res;
+    }
+
+    @Override
+    public PSet<T> plus(PSet<T> other, MethodHandle compare) {
+        PSet a = minus(other, compare);
+        MultiSet ms = new MultiSet(other,null);
+        return new MultiSet(a, ms);
+    }
+
+    @Override
+    public PSet<T> minus(T element) {
+        int index = FlatSet.find_0(elements, element, offset, end);
+        if (index==-1) return this;
+        if (end-offset==2) {
+            T remainder;
+            if (index==offset) {
+                remainder = elements[offset+1];
+            } else {
+                remainder = elements[offset];
+            }
+            return new SingleElementSet(remainder);
+        } else {
+            if (index==end-1) {
+                return new RegionSet(elements, offset, end-1);
+            } else if (index==offset) {
+                return new RegionSet(elements, offset+1, end);
+            }
+            PSet after = new RegionSet(elements, index+1, end);
+            MultiSet ms = new MultiSet(after,null);
+            PSet before = new RegionSet(elements, offset, index-1);
+            return new MultiSet(before, ms);
+        }
     }
 
 }

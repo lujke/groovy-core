@@ -268,15 +268,18 @@ public class Hamt<K,V>  implements Iterable<Hamt.Entry<K,V>>{
             PSet newSet;
             if (newEntry instanceof CollisionNode) {
                 CollisionNode cn = (CollisionNode) newEntry;
-                newSet = list.minus(cn.list, equalEntryKeys).plus(cn.list, equalEntryKeys);
+                newSet = list.minus(cn.list, equalEntryKeys).append(cn.list);
             } else {
-                newSet = list.minus((Entry) oldEntry).plus((Entry) newEntry);
+                newSet = list.minus((Entry) oldEntry).append(
+                            SetCreator.create((Entry<K,V>) newEntry));
             }
             return new CollisionNode(newSet,hash);
         }
         @Override
         public Node<K> plus(int hashCode, int level, Node<K> entry) {
-            return new CollisionNode(list.plus((Entry) entry),hash);
+            return new CollisionNode(list.append(
+                    SetCreator.create((Entry<K,V>) entry)),
+                    hash);
         }
         @Override
         public Node<K> merge(Node<K> otherRoot, int level) {

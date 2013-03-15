@@ -54,7 +54,7 @@ public final class FlatSet<T> implements PSet<T> {
     }
 
     @Override
-    public PSet<T> plus(PSet<T> other) {
+    public PSet<T> append(PSet<T> other) {
         if (other.isEmpty()) return this;
         MultiSet ms = null;
         if (other instanceof MultiSet) {
@@ -63,6 +63,14 @@ public final class FlatSet<T> implements PSet<T> {
             ms = new MultiSet<>(other, null);
         }
         return new MultiSet<T>(this, ms);
+    }
+    
+    @Override
+    public PSet<T> minus(PSet<T> other, MethodHandle compare) {
+        if (other.isEmpty()) return this;
+        PSet<T> res = minus_0(elements, other, compare, 0, elements.length);
+        if (res==null) return this;
+        return res;
     }
     
     private static <T> int find(T[] elements, PSet<T> other, MethodHandle compare, int index, int max, boolean negate) throws Throwable {
@@ -76,6 +84,13 @@ public final class FlatSet<T> implements PSet<T> {
             return index;
         }
         return index;
+    }
+    
+    protected static <T> int find_0(T[] elements, T searchElement, final int is, final int ie) {
+        for (int i=is; i<ie; i++) {
+            if (elements[i]==searchElement) return i;
+        }
+        return -1;
     }
     
     protected static <T> PSet<T> minus_0(T[] elements, PSet<T> other, MethodHandle compare, final int is, final int ie) {
@@ -106,13 +121,17 @@ public final class FlatSet<T> implements PSet<T> {
         }
         return null;
     }
-    
+
     @Override
-    public PSet<T> minus(PSet<T> other, MethodHandle compare) {
-        if (other.isEmpty()) return this;
-        PSet<T> res = minus_0(elements, other, compare, 0, elements.length);
-        if (res==null) return this;
-        return res;
+    public PSet<T> plus(PSet<T> other, MethodHandle compare) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public PSet<T> minus(T element) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

@@ -17,6 +17,7 @@ package groovy.mop.internal.pcollection;
 
 import java.lang.invoke.MethodHandle;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 public final class MultiSet<T> implements PSet<T> {
     private final PSet<T> object;
@@ -27,7 +28,8 @@ public final class MultiSet<T> implements PSet<T> {
         this.next = next;
     }
 
-    public PSet<T> plus(PSet<T> other) {
+    @Override
+    public PSet<T> append(PSet<T> other) {
         if (other.isEmpty()) return this;
         MultiSet<T> l = null;
         if (other instanceof MultiSet) {
@@ -93,5 +95,62 @@ public final class MultiSet<T> implements PSet<T> {
     private FlatSet<T> flatten() {
         // TODO Auto-generated method stub
         return null;
+    }
+    
+    @Override
+    public PSet<T> minus(T element) {
+        LinkedList<PSet> stack = new LinkedList();
+        PSet changed = null;
+        MultiSet current = this; 
+        for (;current!=null; current = current.next) {
+            PSet old = current.object;
+            stack.addFirst(old);
+            changed = old.minus(element);
+            if (old!=changed) {
+                stack.removeFirst();
+                break;
+            } else {
+                changed = null;
+            }
+        }
+        if (changed==null) return this;
+        current = current.next;
+        if (!changed.isEmpty()) current = new MultiSet<T>(changed,current);
+        while (!stack.isEmpty()) {
+            current = new MultiSet<T>(stack.removeFirst(),current);
+        }
+        if (current==null) return EmptySet.create();
+        if (current.next==null) return current.object;
+        return current;
+    }
+
+    @Override
+    public PSet<T> plus(PSet<T> other, MethodHandle compare) {
+        LinkedList<MultiSet> stack = new LinkedList();
+        for (MultiSet current = this; current!=null; current = current.next) stack.add(current);
+        MultiSet lastUnchanged = null;
+        PSet changed = null;
+        
+        // first find out what we can reuse
+        while (!stack.isEmpty()) {
+            lastUnchanged = stack.removeFirst();
+            PSet maybeChanged = lastUnchanged.object.minus(other, compare);
+            if (maybeChanged==lastUnchanged.object) continue;
+            lastUnchanged = lastUnchanged.next;
+            changed = maybeChanged;
+        }
+        // if changed was never set, there is no change, thus return new set with this.
+        if (changed==null) return append(other);
+        // now make the new set
+        MultiSet ms = new MultiSet(other,null);
+        ms = new MultiSet(lastUnchanged,ms);
+        if (!changed.isEmpty()) {
+            ms = new MultiSet(changed, ms);
+        }
+        while (!stack.isEmpty()) {
+            MultiSet old = stack.removeFirst();
+            ms = new MultiSet(old.object,ms);
+        }
+        return ms;
     }
 }

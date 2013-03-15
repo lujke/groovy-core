@@ -18,7 +18,6 @@ package groovy.mop.internal.pcollection;
 import java.lang.invoke.MethodHandle;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 
 public class EmptySet<T> implements PSet<T> {
 
@@ -39,20 +38,25 @@ public class EmptySet<T> implements PSet<T> {
     public boolean isEmpty() {
         return true;
     }
-
-    @Override
-    public PSet<T> plus(PSet<T> other) {
-        return other;
-    }
-
-    @Override
-    public PSet<T> plus(List<T> other, MethodHandle compare) {
-        return SetCreator.create(other);
-    }
     
     @Override
     public PSet<T> minus(PSet<T> other, MethodHandle compare) {
         return this;
+    }
+    
+    @Override
+    public PSet<T> append(PSet<T> other) {
+        return other;
+    }
+
+    @Override
+    public PSet<T> minus(T element) {
+        return this;
+    }
+
+    @Override
+    public PSet<T> plus(PSet<T> other, MethodHandle compare) {
+        return other;
     }
 
 }

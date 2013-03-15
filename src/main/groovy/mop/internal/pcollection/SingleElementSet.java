@@ -52,7 +52,7 @@ public final class SingleElementSet<T> implements PSet<T> {
     }
 
     @Override
-    public PSet<T> plus(PSet<T> other) {
+    public PSet<T> append(PSet<T> other) {
         if (other.isEmpty()) return this;
         if (other instanceof SingleElementSet) {
             SingleElementSet<T> s2 = (SingleElementSet<T>) other;
@@ -75,4 +75,28 @@ public final class SingleElementSet<T> implements PSet<T> {
         return this;
     }
 
+    @Override
+    public PSet<T> minus(T element) {
+        if (this.element==element) return EmptySet.create();
+        return this;
+    }
+
+    @Override
+    public PSet<T> plus(PSet<T> other, MethodHandle compare) {
+        return this.minus(other,compare).append(other);
+    }
+
+/*
+    private boolean contains(Iterable<T> other, MethodHandle compare) {
+        for (T t : other) {
+            boolean b = false;
+            try {
+                b = (Boolean) compare.invokeWithArguments(element, t);
+            } catch (Throwable e) {
+                ExceptionUtils.sneakyThrow(e);
+            }
+            if (b) return true;
+        }
+        return false;
+    }*/
 }
