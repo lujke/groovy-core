@@ -20,7 +20,7 @@ import java.util.*;
 
 import org.codehaus.groovy.GroovyBugError;
 
-public class Hamt<K,V>  implements Iterable<Hamt.Entry<K,V>>{
+public class Hamt<K,V>  implements Iterable<V> {
     private static final MethodHandle equalEntryKeys;
     static {
         try {
@@ -443,7 +443,21 @@ public class Hamt<K,V>  implements Iterable<Hamt.Entry<K,V>>{
     }
 
     @Override
-    public Iterator<Entry<K, V>> iterator() {
+    public java.util.Iterator<V> iterator() {
+        final Iterator<Entry<K, V>> it = entryIterator();
+        return new Iterator<V>() {
+            @Override
+            public boolean hasNext() { return it.hasNext(); }
+            @Override
+            public V next() { return it.next().getValue();}
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+    
+    public Iterator<Entry<K, V>> entryIterator() {
         final LinkedList<Node> stack = new LinkedList();
         stack.add(root);
         return new Iterator<Entry<K,V>>() {
