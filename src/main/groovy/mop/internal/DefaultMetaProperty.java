@@ -27,14 +27,13 @@ import java.util.List;
  * @author <a href="mailto:james@coredevelopers.net">James Strachan</a>
  * @author Jochen Theodorou
  */
-public class DefaultMetaProperty implements MetaProperty {
-    private final String name;
+public class DefaultMetaProperty extends AbstractClassMember implements MetaProperty {
     private final Class type;
     private final List<MetaMethod> getter;
     private final MetaMethod setter, fieldSetter, fieldGetter;
 
     public DefaultMetaProperty(String name, Class type, List<MetaMethod> getter, MetaMethod setter, MetaMethod fieldGetter, MetaMethod fieldSetter) {
-        this.name = name;
+        super(name, Modifier.PUBLIC);
         this.type = type;
         this.getter = getter;
         this.setter = setter;
@@ -43,24 +42,10 @@ public class DefaultMetaProperty implements MetaProperty {
     }
 
     /**
-     * @return name of the property
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
      * @return the type of the property
      */
     public Class getType() {
         return type;
-    }
-
-    /**
-     * @return modifiers
-     */
-    public int getModifiers() {
-        return Modifier.PUBLIC;
     }
 
     @Override

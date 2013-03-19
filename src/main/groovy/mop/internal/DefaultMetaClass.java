@@ -16,15 +16,9 @@ package groovy.mop.internal;
 
 import java.lang.invoke.*;
 import java.lang.invoke.MethodHandles.Lookup;
-import java.lang.reflect.*;
-import java.util.*;
 
 import groovy.mop.*;
 import groovy.mop.internal.pcollection.PSet;
-
-import org.codehaus.groovy.runtime.ExceptionUtils;
-
-import static groovy.mop.internal.MetaClassHelper.*;
 
 /**
  * This is the implementation of a meta class for Groovy according to
@@ -35,31 +29,21 @@ import static groovy.mop.internal.MetaClassHelper.*;
  * @see MetaClass
  */
 public class DefaultMetaClass {
+    
     private final static Lookup LOOKUP = MethodHandles.lookup();
     //TODO: set correct value
     private final static MethodHandle METAMETHOD_ISASSIGNABLE = null;//SignatureHelper#canBeCalledWithTypes
     
+    // -------------  immutable values ----------
     private final Class<?> theClass;
-    private final DefaultRealm domain;
-    private final DefaultMetaClass[] parents;
-    private MetaIndex<MetaProperty> properties = null;
-    private MetaIndex<DefaultMetaMethod> methods = null;
+    private final DefaultRealm realm;
 
-    public DefaultMetaClass(DefaultRealm domain, Class<?> theClass) {
+    private NameVisibilityIndex<MetaProperty> properties = null;
+    private NameVisibilityIndex<DefaultMetaMethod> methods = null;
+
+    public DefaultMetaClass(DefaultRealm realm, Class<?> theClass) {
         this.theClass = theClass;
-        this.domain = domain;
-        parents = createParents(this.domain, theClass);
-    }
-
-    private static DefaultMetaClass[] createParents(DefaultRealm domain, Class<?> theClass) {
-        DefaultMetaClass superClass = domain.getMetaClassInternal(theClass.getSuperclass());
-        Class[] interfaces = theClass.getInterfaces();
-        DefaultMetaClass[] mint = new DefaultMetaClass[interfaces.length+1];
-        mint[interfaces.length] = superClass;
-        for (int i=0; i<interfaces.length; i++) {
-            mint[i] = domain.getMetaClassInternal(interfaces[i]);
-        }
-        return mint;
+        this.realm = realm;
     }
     
     // -------------------------------------------------------------------
@@ -67,12 +51,12 @@ public class DefaultMetaClass {
     // -------------------------------------------------------------------
 
     public PSet<MetaProperty> getProperties(Class view, String name) {
-        if (properties==null) computeProperties();
+        computeProperties();
         return properties.get(name);
     }
 
     public PSet<DefaultMetaMethod> getMethods(Class view, String name) {
-        if (methods==null) computeMethods();
+        computeMethods();
         return methods.get(name);
     }
     
@@ -82,38 +66,27 @@ public class DefaultMetaClass {
     
     // -------------------------------------------------------------------
 
-    private void computeProperties() {
-        // TODO Auto-generated method stub
+    public void computeProperties() {
+        if (properties!=null) return;
+        //properties = PropertyHelper.createIndex(theClass, realm);
+    }
+    
+    public NameVisibilityIndex<DefaultMetaMethod> computeMethods() {
+        if (methods!=null) return methods;
+        methods = MethodHelper.createIndex(this);
+        return methods;
     }
 
-    private void computeMethods() {
+    public DefaultRealm getRealm() {
+        return realm;
+    }
+
+    public NameVisibilityIndex<DefaultMetaMethod> getExtensions() {
         // TODO Auto-generated method stub
-        
+        return null;
     }
 
     /*
-    @Override
-    public Collection<? extends MetaProperty> getMetaProperties() {
-        if (properties==null) computeProperties();
-        return properties.getPublicAndPrivate();
-    }
-
-    @Override
-    public MetaProperty getMetaProperty(String name) {
-        if (properties==null) computeProperties();
-        return properties.getSingle(name);
-    }
-
-    @Override
-    public Collection<? extends MetaMethod> getMetaMethods() {
-        if (methods==null) computeMethods();
-        return methods.getPublicAndPrivate();
-    }
-    
-    private List<DefaultMetaMethod> getMetaMethods(String name) {
-        if (methods==null) computeMethods();
-        return methods.getList(name);
-    }
 
     @Override
     public List<? extends MetaMethod> getMetaMethods(String name, Class... argumentTypes) {
@@ -128,58 +101,10 @@ public class DefaultMetaClass {
         Class[] types = convertToTypeArray(arguments);
         return getMetaMethods(name, types);
     }
-
-    public Class<?> getTheClass() {
-        return theClass;
-    }
     
     private MetaIndex<DefaultMetaMethod> getMetaMethodIndex() {
         computeMethods();
         return methods;
-    }
-
-    private void computeMethods() {
-        MetaIndex<DefaultMetaMethod> newIndex = getParentPublicMethods();
-        // add public and private methods into lists
-        Method[] declaredMethods = theClass.getDeclaredMethods();
-        if (declaredMethods.length != 0) {
-            // we to fill a map that goes by name and we want to gather all 
-            // the methods before adding them, since MetaMethodView will have to 
-            // handle inheritance
-            // (1)  sort by name
-            Arrays.sort(declaredMethods, new Comparator<Method>() {
-                @Override
-                public int compare(Method o1, Method o2) {
-                    return o1.getName().compareTo(o2.getName());
-                }
-            });
-            // (2)  for each name make list of public and private methods
-            //      and add the result to our map
-            String lastName = null;
-            List<DefaultMetaMethod> privateMethods = null;
-            List<DefaultMetaMethod> publicMethods = null;
-            
-            for (Method m : declaredMethods) {
-                // TODO: add mop renaming
-                DefaultMetaMethod dmm = new DefaultMetaMethod(theClass, m.getName(), m.getModifiers(), unreflect(m));
-    
-                if (lastName==null) {
-                    privateMethods = new LinkedList<>();
-                    publicMethods = new LinkedList<>();
-                } else if (!m.getName().equals(lastName)) {
-                    publicMethods = mergeMethods(publicMethods, getParentPublicMethods(lastName));
-                    newIndex = newIndex.putLeaf(lastName, privateMethods, publicMethods);
-                }
-    
-                lastName = m.getName();
-                if (Modifier.isPrivate(m.getModifiers())) {
-                    privateMethods.add(dmm);
-                } else {
-                    publicMethods.add(dmm);
-                }
-            }
-            methods = newIndex;
-        }
     }
 
     private static MethodHandle unreflect(Method m) {

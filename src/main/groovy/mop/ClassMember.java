@@ -15,17 +15,12 @@
  */
 package groovy.mop;
 
-import java.util.List;
-
-/**
- * Represents a property on a bean which may have a getter and/or a setter
- * 
- * @author Jochen Theodorou
- */
-public interface MetaProperty extends ClassMember{
-    public Class getType();
-    public List<MetaMethod> getPropertyGetter();
-    public MetaMethod getPropertySetter();
-    public MetaMethod getFieldGetter();
-    public MetaMethod getFieldSetter();
+public interface ClassMember {
+    public String getName();
+    public boolean isStatic();
+    public boolean isAbstract();
+    public boolean isPrivate();
+    public boolean isProtected();
+    public boolean isPublic();
+    public int getModifiers();
 }

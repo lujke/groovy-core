@@ -15,16 +15,7 @@
  */
 package groovy.mop;
 
-public interface MetaMethod {
-
-    public String getName();
+public interface MetaMethod extends ClassMember {
     public Class getReturnType();
-    public Class getDeclaringClass();
-    public boolean isStatic();
-    public boolean isAbstract();
-    public boolean isPrivate();
-    public boolean isProtected();
-    public boolean isPublic();
-    public int getModifiers();
     public Class[] getParameterClasses(); 
 }

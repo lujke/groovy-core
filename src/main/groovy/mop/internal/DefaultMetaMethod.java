@@ -19,7 +19,6 @@ package groovy.mop.internal;
 import groovy.mop.MetaMethod;
 
 import java.lang.invoke.*;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
 /**
@@ -27,38 +26,14 @@ import java.util.Arrays;
  *
  * @author Jochen Theodorou
  */
-public class DefaultMetaMethod implements MetaMethod {
-    public final static MethodHandle equalTargetType=null;
-    
-    
+public class DefaultMetaMethod extends AbstractClassMember implements MetaMethod {
     private final MethodType signature;
-    private final int modifiers;
     private final MethodHandle target;
-    private final String name;
-    private final Class declaringClass;
 
-    public DefaultMetaMethod(Class declaringClass, String name, MethodType signature) {
-        this.signature = signature;
-        target = null;
-        modifiers = Modifier.PUBLIC;
-        this.name = name;
-        this.declaringClass = declaringClass;
-    }
-
-    public DefaultMetaMethod(Class declaringClass, String name, int modifiers, MethodHandle target) {
-        this.name = name;
-        this.modifiers = modifiers;
+    public DefaultMetaMethod(String name, int modifiers, MethodHandle target) {
+        super(name, modifiers);
         this.target = target;
         this.signature = target.type();
-        this.declaringClass = declaringClass;
-    }
-
-    public int getModifiers() {
-        return modifiers;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public Class getReturnType() {
@@ -73,33 +48,7 @@ public class DefaultMetaMethod implements MetaMethod {
             + Arrays.toString(getParameterClasses())
             + " returns: "
             + getReturnType()
-            + " owner: "
-            + getDeclaringClass()
             + "]";
-    }
-
-    public boolean isStatic() {
-        return (getModifiers() & Modifier.STATIC) != 0;
-    }
-
-    public boolean isAbstract() {
-        return (getModifiers() & Modifier.ABSTRACT) != 0;
-    }
-
-    public final boolean isPrivate() {
-        return (getModifiers() & Modifier.PRIVATE) != 0;
-    }
-
-    public final boolean isProtected() {
-        return (getModifiers() & Modifier.PROTECTED) != 0;
-    }
-
-    public final boolean isPublic() {
-        return (getModifiers() & Modifier.PUBLIC) != 0;
-    }
-
-    public Class getDeclaringClass() {
-        return declaringClass;
     }
 
     public Class[] getParameterClasses() {
