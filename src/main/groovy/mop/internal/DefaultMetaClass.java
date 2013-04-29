@@ -86,6 +86,11 @@ public class DefaultMetaClass {
         return null;
     }
 
+    public DefaultMetaMethod selectMethod(Class c, Object receiver, String name, Object... args) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
     /*
 
     @Override
