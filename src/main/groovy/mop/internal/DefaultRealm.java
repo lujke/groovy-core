@@ -21,6 +21,9 @@ import groovy.mop.Realm;
 import groovy.mop.MetaClass;
 
 public class DefaultRealm implements Realm {
+    private static DefaultRealm ROOT = new DefaultRealm("ROOT"); 
+    private final String name; 
+    
     private final ClassValue<AtomicReference<DefaultMetaClass>> cv = new ClassValue() {
         @Override
         protected AtomicReference<DefaultMetaClass> computeValue(Class type) {
@@ -28,6 +31,10 @@ public class DefaultRealm implements Realm {
             return new AtomicReference<DefaultMetaClass>(mc);
         }
     };
+    
+    private DefaultRealm(String name) {
+        this.name = name;
+    }
 
     @Override
     public MetaClass getMetaClass(Class<?> theClass) {
@@ -40,5 +47,14 @@ public class DefaultRealm implements Realm {
     
     public void setMetaClassInternal(DefaultMetaClass mc) {
         cv.get(mc.getTheClass()).lazySet(mc);
+    }
+
+    public static DefaultRealm getRoot() {
+        return ROOT;
+    }
+    
+    @Override
+    public String toString() {
+        return "Realm "+name;
     }
 }

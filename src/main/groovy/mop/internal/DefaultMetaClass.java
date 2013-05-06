@@ -14,11 +14,12 @@
  */
 package groovy.mop.internal;
 
-import java.lang.invoke.*;
-import java.lang.invoke.MethodHandles.Lookup;
+import java.util.LinkedList;
 
 import groovy.mop.*;
 import groovy.mop.internal.pcollection.PSet;
+
+import static groovy.mop.internal.MetaClassHelper.*;
 
 /**
  * This is the implementation of a meta class for Groovy according to
@@ -29,10 +30,6 @@ import groovy.mop.internal.pcollection.PSet;
  * @see MetaClass
  */
 public class DefaultMetaClass {
-    
-    private final static Lookup LOOKUP = MethodHandles.lookup();
-    //TODO: set correct value
-    private final static MethodHandle METAMETHOD_ISASSIGNABLE = null;//SignatureHelper#canBeCalledWithTypes
     
     // -------------  immutable values ----------
     private final Class<?> theClass;
@@ -56,8 +53,9 @@ public class DefaultMetaClass {
     }
 
     public PSet<DefaultMetaMethod> getMethods(Class view, String name) {
-        computeMethods();
-        return methods.get(name);
+        NameVisibilityIndex<DefaultMetaMethod> index = getMethodIndex();
+        PSet<DefaultMetaMethod> methods = index.get(name);
+        return methods;
     }
     
     public Class<?> getTheClass() {
@@ -71,7 +69,7 @@ public class DefaultMetaClass {
         //properties = PropertyHelper.createIndex(theClass, realm);
     }
     
-    public NameVisibilityIndex<DefaultMetaMethod> computeMethods() {
+    public NameVisibilityIndex<DefaultMetaMethod> getMethodIndex() {
         if (methods!=null) return methods;
         methods = MethodHelper.createIndex(this);
         return methods;
@@ -83,14 +81,51 @@ public class DefaultMetaClass {
 
     public NameVisibilityIndex<DefaultMetaMethod> getExtensions() {
         // TODO Auto-generated method stub
-        return null;
+        return NameVisibilityIndex.EMPTY;
     }
 
-    public DefaultMetaMethod selectMethod(Class c, Object receiver, String name, Object... args) {
+    public void selectMethod(MOPCall call) {
+        PSet<DefaultMetaMethod> methods = getMethods(call.baseClass, call.name);
+        setCallTargetWithDistanceCalculator(methods,call);
+    }
+    
+    private void setCallTargetWithDistanceCalculator(PSet<DefaultMetaMethod> methods, MOPCall call) {
+        long savedDistance = -1;
+        DefaultMetaMethod ret = null;
+        Class[] types = call.types;
+        LinkedList<DefaultMetaMethod> errorList = null;
+        for (DefaultMetaMethod mm : methods) {
+            long distance = calculateParameterDistance(types, mm.getParameterClasses()); 
+            if (distance==-1 || distance>savedDistance) continue;
+            if (distance==0) {
+                transformHandleForTypes(call, ret);
+                return;
+            }
+            if (distance<savedDistance) {
+                errorList = null;
+                savedDistance = distance;
+                ret = mm;
+                continue;
+            } 
+            //distance==savedDistance
+            if (errorList==null) {
+                errorList = new LinkedList<>();
+                errorList.add(ret);
+            }
+            errorList.add(mm);
+        }
+        if (errorList!=null) {
+            call.errorList = errorList;
+        } else {
+            transformHandleForTypes(call, ret);
+        }
+    }
+
+    private void transformHandleForTypes(MOPCall call, DefaultMetaMethod ret) {
         // TODO Auto-generated method stub
-        return null;
+        
     }
-
+    
     /*
 
     @Override
@@ -107,10 +142,6 @@ public class DefaultMetaClass {
         return getMetaMethods(name, types);
     }
     
-    private MetaIndex<DefaultMetaMethod> getMetaMethodIndex() {
-        computeMethods();
-        return methods;
-    }
 
     private static MethodHandle unreflect(Method m) {
         try {
@@ -157,42 +188,12 @@ public class DefaultMetaClass {
         }
     }
 
-    private void transformHandleForTypes(MOPCall call, DefaultMetaMethod mm, Class[] types)
-    {
-        // TODO Auto-generated method stub
-        
+*/
+    
+    @Override
+    public String toString() {
+        return "MetaClass(realm:"+getRealm()+",class:"+theClass.getName()+")";
     }
-
-    private void getCallTargetWithDistanceCalculator(MOPCall call, List<DefaultMetaMethod> methods, String name, Class[] types) {
-        long savedDistance = -1;
-        DefaultMetaMethod ret = null;
-        LinkedList<DefaultMetaMethod> errorList = null;
-        for (DefaultMetaMethod mm : methods) {
-            long distance = calculateParameterDistance(types, mm.getParameterClasses()); 
-            if (distance==-1 || distance>savedDistance) continue;
-            if (distance==0) {
-                transformHandleForTypes(call, ret, types);
-                return;
-            }
-            if (distance<savedDistance) {
-                errorList = null;
-                savedDistance = distance;
-                ret = mm;
-                continue;
-            } 
-            //distance==savedDistance
-            if (errorList==null) {
-                errorList = new LinkedList<>();
-                errorList.add(ret);
-            }
-            errorList.add(mm);
-        }
-        if (errorList!=null) {
-            call.errorList = errorList;
-        } else {
-            transformHandleForTypes(call, ret, types);
-        }
-    }*/
 
 }
 

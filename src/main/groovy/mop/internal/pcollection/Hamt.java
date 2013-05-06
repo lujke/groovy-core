@@ -53,6 +53,7 @@ public class Hamt<K,V>  implements Iterable<V> {
             throw new UnsupportedOperationException();
         }
         public boolean isLeaf() {return false;}
+        public boolean isFullNode() {return false;}
         public Entry getEntry(K key){return null;}
         public abstract Node<K> replace(int hashCode, int level, Node<K> newEntry, Node<K> oldEntry);
         public abstract Node<K> plus(int hashCode, int level, Node<K> entry);
@@ -103,7 +104,7 @@ public class Hamt<K,V>  implements Iterable<V> {
             int bitmap = 1<<index;
             hashCode = hash;
             int otherIndex = getLevelIndex(hashCode,level);
-            bitmap &= 1<<otherIndex; 
+            bitmap |= 1<<otherIndex; 
             Node<K> ret = null;
             if (index<otherIndex) {
                 ret = new BitmapNode(bitmap, (Entry) newEntry, this);
@@ -119,11 +120,18 @@ public class Hamt<K,V>  implements Iterable<V> {
             if (Hamt.getEntry(key, otherRoot, level)!=null) return otherRoot;
             return newSubTree(key, otherRoot, this, level);
         };
+        @Override public String toString() {
+            return key.toString()+":"+value.toString();
+        }
     }
     private static class ArrayNode extends Node {
         protected final Node[] array;
         private ArrayNode(Node... array) {
             this.array = array;
+        }
+        @Override
+        public boolean isFullNode() {
+            return true;
         }
         @Override
         public Node getChild(int index) {
@@ -159,6 +167,9 @@ public class Hamt<K,V>  implements Iterable<V> {
                 BitmapNode other = (BitmapNode) otherRoot;
                 return mergeBB(array, Integer.MAX_VALUE, other.array, other.bitmap, level+1, null);
             }
+        }
+        @Override public String toString() {
+            return Arrays.toString(array);
         }
     }
     private static class BitmapNode extends Node {
@@ -240,6 +251,9 @@ public class Hamt<K,V>  implements Iterable<V> {
                 return mergeBB(array,bitmap,otherNodes,otherBitmap,level+1,otherRoot);
             }
         }
+        @Override public String toString() {
+            return Arrays.toString(array);
+        }
     }
     private static class CollisionNode<K,V> extends Node<K> {
         private final PSet<Entry<K,V>> list;
@@ -310,7 +324,7 @@ public class Hamt<K,V>  implements Iterable<V> {
         return key.hashCode();
     }
     private static int getLevelIndex(int hashCode, int level) {
-        return (hashCode >> (5*(level+1))) & 0b11111;
+        return (hashCode >>> (5*level)) & 0b11111;
     }
     
     public Entry<K,V> getEntry(K key) {
@@ -334,17 +348,18 @@ public class Hamt<K,V>  implements Iterable<V> {
         Node[] path = new Node[8]; // more than that is not possible
         int pathIndex = -1;
         Node current = root;
-        while (true) {
+        while (current!=null) {
             pathIndex++;
             path[pathIndex] = current;
             if (current.isLeaf()) {
-                return path;
+                break;
             } else {
                 int childIndex = hash & 0b11111;
                 hash = hash >>> 5;
                 current = current.getChild(childIndex);
             }
         }
+        return path;
     }
     
     private static int getLastPathEntry(Node[] nodes) {
@@ -366,15 +381,18 @@ public class Hamt<K,V>  implements Iterable<V> {
         // get last index of path 
         int lastPathEntry = getLastPathEntry(path);
         
-        // we build up a new trie containing all the old nodes
+        // we build up a new trie containing all the old nodes,
         // that are not changed plus new nodes for the path elements
         Node lastNode = path[lastPathEntry];
-        Node newRoot = newNode;
-        if (!lastNode.isLeaf()) {
-            // lastNode always a bitmap node here!
-            newRoot = lastNode.plus(hash, 0, newNode);
-            lastPathEntry--;
+        if (lastPathEntry>0) {
+            Node parent = path[lastPathEntry-1];
+            if (!parent.isFullNode()) {
+                lastPathEntry--;
+                lastNode = parent;
+            }
         } 
+        Node newRoot = lastNode.plus(hash, lastPathEntry, newNode);
+        lastPathEntry--;
         
         Node lastElement = lastNode;
         for (int i=lastPathEntry; i>=0; i--) {
@@ -387,6 +405,7 @@ public class Hamt<K,V>  implements Iterable<V> {
 
     public Hamt<K,V> merge(Hamt<K,V> other) {
         if (other==EMPTY) return this;
+        if (this==EMPTY) return other;
         return new Hamt<K,V>(root.merge(other.root,0));
     }
 

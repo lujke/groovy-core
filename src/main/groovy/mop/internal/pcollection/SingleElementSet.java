@@ -37,6 +37,7 @@ public final class SingleElementSet<T> implements PSet<T> {
             }
             @Override
             public T next() {
+                done = true;
                 return element;
             }
             @Override

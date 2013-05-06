@@ -67,10 +67,12 @@ public final class GroovyInvoker {
        } else {
            c = NullObject.class;
        }
-       DefaultMetaMethod m = realm.getMetaClassInternal(c).selectMethod(c, receiver, name, args);
-       MethodHandle mh = adaptForArrayCall(m.getTarget(), args);
+       MOPCall call = new MOPCall(c,receiver,name,args);
+       realm.getMetaClassInternal(c).selectMethod(call);
+       /*MethodHandle mh = adaptForArrayCall(m.getTarget(), args);
        MethodHandles h;
-       return (R) invokeExact(mh,args);
+       return (R) invokeExact(mh,args);*/
+       return null;
     }
 
     public static <R> R invoke(MethodHandle mh, Object... args) {

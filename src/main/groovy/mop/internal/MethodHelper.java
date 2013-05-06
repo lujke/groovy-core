@@ -16,6 +16,8 @@
 package groovy.mop.internal;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -27,26 +29,35 @@ public class MethodHelper<T> {
      * }
      */
     private final static MethodHandle equalTypesFilter = null;
+    private final static Lookup LOOKUP = MethodHandles.lookup();
+
     
     private static DefaultMetaClass[] createParents(DefaultRealm realm, Class<?> theClass) {
-        DefaultMetaClass superClass = realm.getMetaClassInternal(theClass.getSuperclass());
+        Class sc = theClass.getSuperclass();
         Class[] interfaces = theClass.getInterfaces();
-        DefaultMetaClass[] mint = new DefaultMetaClass[interfaces.length+1];
-        mint[interfaces.length] = superClass;
+        DefaultMetaClass[] mint;
+        if (sc==null) {
+            mint = new DefaultMetaClass[interfaces.length];
+        } else {
+            DefaultMetaClass superClass = realm.getMetaClassInternal(theClass.getSuperclass());
+            mint = new DefaultMetaClass[interfaces.length+1];
+            mint[interfaces.length] = superClass;
+        }
         for (int i=0; i<interfaces.length; i++) {
             mint[i] = realm.getMetaClassInternal(interfaces[i]);
         }
         return mint;
     }
     
-    private static NameVisibilityIndex<DefaultMetaMethod> fromSuper(DefaultMetaClass superClass) {
-        if (superClass==null) return NameVisibilityIndex.EMPTY;
-        return superClass.computeMethods();
+    private static NameVisibilityIndex<DefaultMetaMethod> fromSuper(DefaultMetaClass[] superClasses) {
+        if (superClasses.length==0) return NameVisibilityIndex.EMPTY;
+        return superClasses[0].getMethodIndex();
     }
     
     private static NameVisibilityIndex<DefaultMetaMethod> makeIndexFromClass(Class<?> theClass) {
         // add public and private methods into this
         Method[] declaredMethods = theClass.getDeclaredMethods();
+        AccessibleObject.setAccessible(declaredMethods, true);
         if (declaredMethods.length == 0) return NameVisibilityIndex.EMPTY;
 
         NameVisibilityIndex temp = NameVisibilityIndex.EMPTY;
@@ -68,13 +79,17 @@ public class MethodHelper<T> {
 
         for (Method m : declaredMethods) {
             // TODO: add mop renaming
-            DefaultMetaMethod dmm = new DefaultMetaMethod(m.getName(), m.getModifiers(), unreflect(m));
+            MethodHandle mh = unreflect(m);
+            if (mh==null) continue; //TODO: see comment in unreflect method
+            DefaultMetaMethod dmm = new DefaultMetaMethod(m.getName(), m.getModifiers(), mh);
 
             if (lastName==null) {
                 privateMethods = new LinkedList();
                 publicMethods = new LinkedList();
             } else if (!m.getName().equals(lastName)) {
                 temp = temp.plus(lastName, publicMethods, privateMethods);
+                privateMethods = new LinkedList();
+                publicMethods = new LinkedList();
             }
 
             lastName = m.getName();
@@ -88,7 +103,15 @@ public class MethodHelper<T> {
     }
 
     private static MethodHandle unreflect(Method m) {
-        return null;
+        try {
+            return LOOKUP.unreflect(m);
+        } catch (IllegalAccessException e) {
+            // TODO:ignore method?
+            // on some systems like for example GAE the method
+            // might be in general blocked. We can either ignore it (current solution)
+            // or create a handle, which will produce an error if called.
+            return null;
+        }
     }
 
     public static NameVisibilityIndex<DefaultMetaMethod> createIndex(DefaultMetaClass metaClass) {
@@ -97,7 +120,7 @@ public class MethodHelper<T> {
         DefaultMetaClass[] parents = createParents(realm, theClass);
         
         // first we build the set of inheritable methods
-        NameVisibilityIndex<DefaultMetaMethod> inheritedMethods = fromSuper(parents[0]);
+        NameVisibilityIndex<DefaultMetaMethod> inheritedMethods = fromSuper(parents);
 
         // next we set the overrides coming from the class
         NameVisibilityIndex<DefaultMetaMethod> methodsFromClass = makeIndexFromClass(theClass);
@@ -107,7 +130,9 @@ public class MethodHelper<T> {
         // super are already done in the parent MetaClass
         LinkedList<NameVisibilityIndex<DefaultMetaMethod>> interfaceExtensions = new LinkedList();
         for (int i=1; i<parents.length; i++) {
-            interfaceExtensions.add(parents[i].getExtensions());
+            NameVisibilityIndex ext = parents[i].getExtensions();
+            if (ext == NameVisibilityIndex.EMPTY) continue;
+            interfaceExtensions.add(ext);
         }
         NameVisibilityIndex<DefaultMetaMethod> theClassExtensions = metaClass.getExtensions(); 
 
@@ -116,9 +141,9 @@ public class MethodHelper<T> {
         //  * current class methods hide super class and interface methods
         //  * current class extension method hide current class methods
         LinkedList mergeList = interfaceExtensions;
-        mergeList.addFirst(inheritedMethods);
-        mergeList.add(methodsFromClass);
-        mergeList.add(theClassExtensions);
+        if (inheritedMethods!=NameVisibilityIndex.EMPTY)    mergeList.addFirst(inheritedMethods);
+        if (methodsFromClass!=NameVisibilityIndex.EMPTY)    mergeList.add(methodsFromClass);
+        if (theClassExtensions!=NameVisibilityIndex.EMPTY)  mergeList.add(theClassExtensions);
         return NameVisibilityIndex.EMPTY.merge(mergeList);
     }
 }

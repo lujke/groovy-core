@@ -18,7 +18,19 @@ package groovy.mop.internal;
 import java.util.LinkedList;
 
 public class MOPCall {
-
     public LinkedList<DefaultMetaMethod> errorList;
+    public String name;
+    public Class baseClass;
+    public Object receiver;
+    public Object[] args;
+    public Class[] types;
+
+    public MOPCall(Class baseClass, Object receiver, String name, Object[] args) {
+        this.name = name;
+        this.baseClass = baseClass;
+        this.receiver = receiver;
+        this.args = args;
+        this.types = MetaClassHelper.convertToTypeArray(args);
+    }
 
 }
