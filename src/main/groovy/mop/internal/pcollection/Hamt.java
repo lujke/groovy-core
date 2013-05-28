@@ -99,7 +99,7 @@ public class Hamt<K,V>  implements Iterable<V> {
                 // hash collision
                 return new CollisionNode(SetCreator.create(newEntry,this),hash);
             }
-            
+
             int index = getLevelIndex(hashCode,level);
             int bitmap = 1<<index;
             hashCode = hash;

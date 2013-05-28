@@ -15,6 +15,7 @@
  */
 package groovy.mop.internal;
 
+import java.lang.invoke.MethodHandle;
 import java.util.LinkedList;
 
 public class MOPCall {
@@ -24,6 +25,7 @@ public class MOPCall {
     public Object receiver;
     public Object[] args;
     public Class[] types;
+    public MethodHandle target;
 
     public MOPCall(Class baseClass, Object receiver, String name, Object[] args) {
         this.name = name;

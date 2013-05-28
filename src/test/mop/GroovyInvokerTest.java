@@ -16,17 +16,29 @@
 package mop;
 
 import static org.junit.Assert.*;
-import groovy.mop.GroovyInvoker;
 
 import org.junit.Test;
+
+import groovy.mop.Closure;
+import groovy.mop.GroovyInvoker;
 
 public class GroovyInvokerTest {
 
     @Test
     public void testSimpleInvocation() {
         String str = "str";
-        Object res = GroovyInvoker.invoke(str, "toString");
+        Object[] args = new Object[0];
+        Object res = GroovyInvoker.invoke(str, "toString", args);
         assertEquals(str,res);
+    }
+    
+    @Test
+    public void testMOPAddedMethod() {
+        GroovyInvoker.setMethod(String.class, new Closure() {
+            public String call(){return "1";}
+        });
+        Object res = GroovyInvoker.invoke("str", "toString");
+        assertEquals("1",res);
     }
 
 }

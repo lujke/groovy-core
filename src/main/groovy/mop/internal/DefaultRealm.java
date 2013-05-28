@@ -15,20 +15,26 @@
  */
 package groovy.mop.internal;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 import groovy.mop.Realm;
 import groovy.mop.MetaClass;
 
 public class DefaultRealm implements Realm {
     private static DefaultRealm ROOT = new DefaultRealm("ROOT"); 
+    private static class MCRef {
+        private DefaultMetaClass mc;
+        public MCRef(DefaultMetaClass mc) {
+            this.mc = mc;
+        }
+    }
+
     private final String name; 
     
-    private final ClassValue<AtomicReference<DefaultMetaClass>> cv = new ClassValue() {
+    private final ClassValue<MCRef> cv = new ClassValue() {
         @Override
-        protected AtomicReference<DefaultMetaClass> computeValue(Class type) {
+        protected MCRef computeValue(Class type) {
             DefaultMetaClass mc = new DefaultMetaClass(DefaultRealm.this, type);
-            return new AtomicReference<DefaultMetaClass>(mc);
+            MetaClassEventSystemImpl.fireMetaClassCreation(DefaultRealm.this, mc);
+            return new MCRef(mc);
         }
     };
     
@@ -38,15 +44,15 @@ public class DefaultRealm implements Realm {
 
     @Override
     public MetaClass getMetaClass(Class<?> theClass) {
-        return new MetaClassHandle(cv.get(theClass).get());
+        return new MetaClassHandle(getMetaClassInternal(theClass));
     }
     
     public DefaultMetaClass getMetaClassInternal(Class<?> theClass) {
-        return cv.get(theClass).get();
+        return cv.get(theClass).mc;
     }
     
     public void setMetaClassInternal(DefaultMetaClass mc) {
-        cv.get(mc.getTheClass()).lazySet(mc);
+        cv.get(mc.getTheClass()).mc = mc;
     }
 
     public static DefaultRealm getRoot() {

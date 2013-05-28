@@ -17,6 +17,7 @@ package groovy.mop;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 
 import groovy.mop.internal.*;
 
@@ -50,6 +51,9 @@ import org.codehaus.groovy.runtime.NullObject;
  * @author <a href="mailto:blackdrag@gmx.org">Jochen "blackdrag" Theodorou</a>
  */
 public final class GroovyInvoker {
+    private static final MethodType INVOKE_EXACT_TYPE = MethodType.methodType(Object.class,MethodHandle.class,Object.class,Object[].class);
+    
+    
     /** 
      * Invokes a method.
      * @param receiver - the object the method is invoked on
@@ -69,10 +73,14 @@ public final class GroovyInvoker {
        }
        MOPCall call = new MOPCall(c,receiver,name,args);
        realm.getMetaClassInternal(c).selectMethod(call);
-       /*MethodHandle mh = adaptForArrayCall(m.getTarget(), args);
-       MethodHandles h;
-       return (R) invokeExact(mh,args);*/
-       return null;
+       MethodHandle mh = MethodHandles.spreadInvoker(call.target.type(), call.args.length+1);
+       mh = MethodHandles.explicitCastArguments(mh, INVOKE_EXACT_TYPE);
+       try {
+           return (R) mh.invokeExact(call.target, call.receiver, args);
+       } catch (Throwable e) {
+           Unchecked.rethrow(e);
+           return null;
+       }
     }
 
     public static <R> R invoke(MethodHandle mh, Object... args) {
@@ -103,5 +111,10 @@ public final class GroovyInvoker {
         private static <T extends Throwable> void thrownInsteadOf(Throwable t) throws T {
          throw (T) t;
         }
-       }
+    }
+
+    public static void setMethod(Class<?> clazz, Closure closure) {
+        // TODO Auto-generated method stub
+        
+    }
 }

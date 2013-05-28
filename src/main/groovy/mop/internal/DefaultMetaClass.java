@@ -90,7 +90,7 @@ public class DefaultMetaClass {
     }
     
     private void setCallTargetWithDistanceCalculator(PSet<DefaultMetaMethod> methods, MOPCall call) {
-        long savedDistance = -1;
+        long savedDistance = Long.MAX_VALUE;
         DefaultMetaMethod ret = null;
         Class[] types = call.types;
         LinkedList<DefaultMetaMethod> errorList = null;
@@ -117,7 +117,7 @@ public class DefaultMetaClass {
         if (errorList!=null) {
             call.errorList = errorList;
         } else {
-            transformHandleForTypes(call, ret);
+            call.target = ret.getTarget();
         }
     }
 
