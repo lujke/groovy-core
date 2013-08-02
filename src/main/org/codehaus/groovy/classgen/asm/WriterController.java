@@ -15,11 +15,6 @@
  */
 package org.codehaus.groovy.classgen.asm;
 
-import groovy.lang.GroovyRuntimeException;
-
-import java.lang.reflect.Constructor;
-import java.util.Map;
-
 import org.codehaus.groovy.GroovyBugError;
 import org.codehaus.groovy.ast.ClassHelper;
 import org.codehaus.groovy.ast.ClassNode;
@@ -29,6 +24,9 @@ import org.codehaus.groovy.ast.InterfaceHelperClassNode;
 import org.codehaus.groovy.ast.MethodNode;
 import org.codehaus.groovy.classgen.AsmClassGenerator;
 import org.codehaus.groovy.classgen.GeneratorContext;
+import org.codehaus.groovy.classgen.asm.indy.IndyBinHelper;
+import org.codehaus.groovy.classgen.asm.indy.IndyCallSiteWriter;
+import org.codehaus.groovy.classgen.asm.indy.InvokeDynamicWriter;
 import org.codehaus.groovy.control.SourceUnit;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -36,22 +34,6 @@ import org.objectweb.asm.Opcodes;
 
 public class WriterController {
 
-    private static Constructor indyWriter, indyCallSiteWriter, indyBinHelper;
-    static {
-        try {
-            ClassLoader cl = WriterController.class.getClassLoader();
-            Class indyClass = cl.loadClass("org.codehaus.groovy.classgen.asm.indy.InvokeDynamicWriter");
-            indyWriter = indyClass.getConstructor(WriterController.class);
-            indyClass = cl.loadClass("org.codehaus.groovy.classgen.asm.indy.IndyCallSiteWriter");
-            indyCallSiteWriter = indyClass.getConstructor(WriterController.class);
-            indyClass = cl.loadClass("org.codehaus.groovy.classgen.asm.indy.IndyBinHelper");
-            indyBinHelper = indyClass.getConstructor(WriterController.class);
-        } catch (Exception e) {
-            indyWriter = null;
-            indyCallSiteWriter = null;
-            indyBinHelper = null;
-        }
-    }
     private AsmClassGenerator acg;
     private MethodVisitor methodVisitor;
     private CompileStack compileStack;
@@ -80,7 +62,7 @@ public class WriterController {
     private int lineNumber = -1;
 
     public void init(AsmClassGenerator asmClassGenerator, GeneratorContext gcon, ClassVisitor cv, ClassNode cn) {
-        Map<String,Boolean> optOptions = cn.getCompileUnit().getConfig().getOptimizationOptions();
+        /*Map<String,Boolean> optOptions = cn.getCompileUnit().getConfig().getOptimizationOptions();
         boolean invokedynamic=false;
         if (optOptions.isEmpty()) {
             // IGNORE
@@ -92,26 +74,18 @@ public class WriterController {
             if (Boolean.FALSE.equals(optOptions.get("int"))) optimizeForInt=false;
             if (invokedynamic) optimizeForInt=false;
             // set other optimizations options to false here
-        }
+        }*/
+        optimizeForInt=false;
+
         this.classNode = cn;
         this.outermostClass = null;
         this.internalClassName = BytecodeHelper.getClassInternalName(classNode);
-        
-        if (invokedynamic) {
-            bytecodeVersion = Opcodes.V1_7;
-            try {
-                this.invocationWriter = (InvocationWriter) indyWriter.newInstance(this);
-                this.callSiteWriter = (CallSiteWriter) indyCallSiteWriter.newInstance(this);
-                this.binaryExpHelper = (BinaryExpressionHelper) indyBinHelper.newInstance(this);
-            } catch (Exception e) {
-                throw new GroovyRuntimeException("Cannot use invokedynamic, indy module was excluded from this build.");
-            }
-        } else {
-            this.callSiteWriter = new CallSiteWriter(this);
-            this.invocationWriter = new InvocationWriter(this);
-            this.binaryExpHelper = new BinaryExpressionHelper(this);
-        }
-        
+
+        bytecodeVersion = Opcodes.V1_7;
+        this.invocationWriter = new InvokeDynamicWriter(this);
+        this.callSiteWriter = new IndyCallSiteWriter(this);
+        this.binaryExpHelper = new IndyBinHelper(this);
+
         this.unaryExpressionHelper = new UnaryExpressionHelper(this);
         if (optimizeForInt) {
             this.fastPathBinaryExpHelper = new BinaryExpressionMultiTypeDispatcher(this);

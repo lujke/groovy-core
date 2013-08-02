@@ -91,7 +91,7 @@ public abstract class Selector {
         }
         return null;
     }
-    abstract void setCallSiteTarget();
+    public abstract void setCallSiteTarget();
 
     /**
      * Helper method to transform the given arguments, consisting of the receiver 

@@ -31,8 +31,8 @@ import org.codehaus.groovy.classgen.asm.InvocationWriter;
 import org.codehaus.groovy.classgen.asm.MethodCallerMultiAdapter;
 import org.codehaus.groovy.classgen.asm.OperandStack;
 import org.codehaus.groovy.classgen.asm.WriterController;
+import org.codehaus.groovy.runtime.BytecodeInterfaceG3;
 import org.codehaus.groovy.runtime.wrappers.Wrapper;
-import org.codehaus.groovy.vmplugin.v7.IndyInterface;
 import org.objectweb.asm.Handle;
 
 import static org.objectweb.asm.Opcodes.*;
@@ -49,7 +49,7 @@ import static org.codehaus.groovy.vmplugin.v7.IndyInterface.CALL_TYPES.*;
 public class InvokeDynamicWriter extends InvocationWriter {
     
     
-    private static final String INDY_INTERFACE_NAME = IndyInterface.class.getName().replace('.', '/');
+    private static final String INDY_INTERFACE_NAME = BytecodeInterfaceG3.class.getName().replace('.', '/');
     private static final String BSM_METHOD_TYPE_DESCRIPTOR = 
         MethodType.methodType(
                 CallSite.class, Lookup.class, String.class, MethodType.class,
