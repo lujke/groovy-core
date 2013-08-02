@@ -104,17 +104,12 @@ public final class GroovyInvoker {
     private static class Unchecked {
 
         public static void rethrow( final Throwable checkedException ) {
-         Unchecked.<RuntimeException>thrownInsteadOf( checkedException );
+            Unchecked.<RuntimeException>thrownInsteadOf( checkedException );
         }
 
         //@SuppressWarnings("unchecked")
         private static <T extends Throwable> void thrownInsteadOf(Throwable t) throws T {
-         throw (T) t;
+            throw (T) t;
         }
-    }
-
-    public static void setMethod(Class<?> clazz, Closure closure) {
-        // TODO Auto-generated method stub
-        
     }
 }
