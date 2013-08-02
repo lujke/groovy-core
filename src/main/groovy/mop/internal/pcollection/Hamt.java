@@ -421,9 +421,13 @@ public class Hamt<K,V>  implements Iterable<V> {
         }
         return original;
     }
+
+    private static void addAllNodes(List<Node> l, Node[] n) {
+        for (Node ni : n) l.add(ni);
+    }
     
     private static Node mergeBB(Node[] n1, int bitmap1, Node[] n2, int bitmap2, int nextLevel, Node orig) {
-        ArrayList list = new ArrayList(32);
+        ArrayList<Node> list = new ArrayList<Node>(32);
         int indexN1 = 0, indexN2 = 0;
         for (int i=0; i<32; i++) {
             int bitIndex = 1 << i;
@@ -434,11 +438,11 @@ public class Hamt<K,V>  implements Iterable<V> {
                     list.add(n1[indexN1].merge(n2[indexN2], nextLevel));
                     indexN1++; indexN2++;
                 } else {
-                    list.add(n1);
+                    addAllNodes(list, n1);
                     indexN1++;
                 }
             } else if (n2Hit) {
-                list.add(n2);
+                addAllNodes(list, n2);
                 indexN2++;
             }
         }
