@@ -417,16 +417,6 @@ public class StringGroovyMethods extends DefaultGroovyMethodsSupport {
         return answer;
     }
 
-    private static StringBufferWriter createStringBufferWriter(StringBuffer self) {
-        return new StringBufferWriter(self);
-    }
-
-    private static StringWriter createStringWriter(String self) {
-        StringWriter answer = new StringWriter();
-        answer.write(self);
-        return answer;
-    }
-
     /**
      * Return a CharSequence with lines (separated by LF, CR/LF, or CR)
      * terminated by the platform specific line separator.

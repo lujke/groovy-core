@@ -12333,11 +12333,6 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
     }
 
     @Deprecated
-    protected static StringBufferWriter createStringBufferWriter(StringBuffer self) {
-        return new StringBufferWriter(self);
-    }
-
-    @Deprecated
     protected static StringWriter createStringWriter(String self) {
         StringWriter answer = new StringWriter();
         answer.write(self);
