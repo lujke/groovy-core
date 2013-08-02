@@ -15,13 +15,13 @@
  */
 package org.codehaus.groovy.vmplugin.v7;
 
+import groovy.mop.MetaMethod;
+
 import java.lang.invoke.*;
 import java.math.BigDecimal;
 import java.util.*;
 
 import org.codehaus.groovy.GroovyBugError;
-
-import groovy.lang.MetaMethod;
 
 import static org.codehaus.groovy.vmplugin.v7.IndyInterface.*;
 import static org.codehaus.groovy.vmplugin.v7.TypeHelper.*;
@@ -77,7 +77,7 @@ public class IndyMath {
             throw new GroovyBugError(e);
         }
     }
-    
+
     /**
      * Choose a method to replace the originally chosen metaMethod to have a
      * more efficient call path. 
@@ -88,14 +88,14 @@ public class IndyMath {
 
         MethodType type = replaceWithMoreSpecificType(info.args, info.targetType); 
         type = widenOperators(type); 
-        
+
         MethodHandle handle = xmap.get(type);
         if (handle==null) return false;
-        
+
         info.handle = handle;
         return true;
     }
-    
+
     /**
      * Widens the operators. For math operations like a+b we generally
      * execute them using a conversion to certain types. If a for example
