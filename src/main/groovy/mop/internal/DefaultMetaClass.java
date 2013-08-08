@@ -98,7 +98,7 @@ public class DefaultMetaClass {
             long distance = calculateParameterDistance(types, mm.getParameterClasses()); 
             if (distance==-1 || distance>savedDistance) continue;
             if (distance==0) {
-                transformHandleForTypes(call, ret);
+                transformHandleForTypes(call, mm);
                 return;
             }
             if (distance<savedDistance) {
@@ -116,14 +116,13 @@ public class DefaultMetaClass {
         }
         if (errorList!=null) {
             call.errorList = errorList;
-        } else {
+        } else if (ret!=null) {
             call.target = ret.getTarget();
         }
     }
 
     private void transformHandleForTypes(MOPCall call, DefaultMetaMethod ret) {
-        // TODO Auto-generated method stub
-        
+        call.target = ret.getTarget();
     }
     
     /*
