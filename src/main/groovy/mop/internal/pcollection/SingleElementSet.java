@@ -100,4 +100,9 @@ public final class SingleElementSet<T> implements PSet<T> {
         }
         return false;
     }*/
+
+    @Override
+    public String toString() {
+        return "["+String.valueOf(element)+"]";
+    }
 }

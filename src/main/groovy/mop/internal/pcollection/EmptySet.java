@@ -58,5 +58,10 @@ public class EmptySet<T> implements PSet<T> {
     public PSet<T> plus(PSet<T> other, MethodHandle compare) {
         return other;
     }
+    
+    @Override
+    public String toString() {
+        return "[]";
+    }
 
 }

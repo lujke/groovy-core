@@ -384,16 +384,20 @@ public class Hamt<K,V>  implements Iterable<V> {
         // we build up a new trie containing all the old nodes,
         // that are not changed plus new nodes for the path elements
         Node lastNode = path[lastPathEntry];
+        boolean handled = false;
+        Node newRoot = null;
         if (lastPathEntry>0) {
             Node parent = path[lastPathEntry-1];
             if (!parent.isFullNode()) {
                 lastPathEntry--;
                 lastNode = parent;
+                handled = true;
+                newRoot = lastNode.merge(newNode, lastPathEntry);
             }
         } 
-        Node newRoot = lastNode.plus(hash, lastPathEntry, newNode);
+        if (!handled) newRoot = lastNode.plus(hash, lastPathEntry, newNode);
         lastPathEntry--;
-        
+
         Node lastElement = lastNode;
         for (int i=lastPathEntry; i>=0; i--) {
             Node n = path[i]; 
@@ -422,10 +426,6 @@ public class Hamt<K,V>  implements Iterable<V> {
         return original;
     }
 
-    private static void addAllNodes(List<Node> l, Node[] n) {
-        for (Node ni : n) l.add(ni);
-    }
-    
     private static Node mergeBB(Node[] n1, int bitmap1, Node[] n2, int bitmap2, int nextLevel, Node orig) {
         ArrayList<Node> list = new ArrayList<Node>(32);
         int indexN1 = 0, indexN2 = 0;
@@ -438,11 +438,11 @@ public class Hamt<K,V>  implements Iterable<V> {
                     list.add(n1[indexN1].merge(n2[indexN2], nextLevel));
                     indexN1++; indexN2++;
                 } else {
-                    addAllNodes(list, n1);
+                    list.add(n1[indexN1]);
                     indexN1++;
                 }
             } else if (n2Hit) {
-                addAllNodes(list, n2);
+                list.add(n2[indexN2]);
                 indexN2++;
             }
         }

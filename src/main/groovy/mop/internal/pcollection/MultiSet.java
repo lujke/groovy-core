@@ -153,4 +153,9 @@ public final class MultiSet<T> implements PSet<T> {
         }
         return ms;
     }
+    
+    @Override
+    public String toString() {
+        return object.toString()+"+"+next.toString();
+    }
 }

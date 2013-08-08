@@ -16,6 +16,7 @@
 package groovy.mop.internal.pcollection;
 
 import java.lang.invoke.MethodHandle;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -34,7 +35,7 @@ public final class FlatSet<T> implements PSet<T> {
             private int index = 0;
             @Override
             public boolean hasNext() {
-                return index<elements.length;
+                return index<elements.length-1;
             }
             @Override
             public T next() {
@@ -134,4 +135,8 @@ public final class FlatSet<T> implements PSet<T> {
         return null;
     }
 
+    @Override
+    public String toString() {
+        return "["+Arrays.toString(elements)+"]";
+    }
 }
