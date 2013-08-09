@@ -22,25 +22,26 @@ import groovy.mop.internal.pcollection.Hamt.Entry;
 
 public class NameVisibilityIndex<V> {
     // I use Object here because otherwise generics complain
-    public static final NameVisibilityIndex EMPTY = new NameVisibilityIndex<Object>(Hamt.EMPTY, Hamt.EMPTY) {
+    public static final NameVisibilityIndex EMPTY = new NameVisibilityIndex(Hamt.EMPTY, Hamt.EMPTY, EmptySet.create()) {
         public String toString() {return "NameVisibilityIndex.EMPTY";};
         @Override
-        public NameVisibilityIndex merge(List<NameVisibilityIndex<Object>> mergeList) {
-            if (mergeList.size()==1) return mergeList.get(0);
-            return super.merge(mergeList);
+        public NameVisibilityIndex merge(NameVisibilityIndex other) {
+            return other;
         };
     };
-    
+
     public final Hamt<String, PSet<V>> pub;
     public final Hamt<String, PSet<V>> priv;
-    private PSet<V> pubSet;
-    
-    public NameVisibilityIndex(Hamt pub, Hamt priv){
+    public final PSet<V> constr;
+//    private PSet<V> pubSet;
+
+    public NameVisibilityIndex(Hamt pub, Hamt priv, PSet constr){
         this.pub = pub;
         this.priv = priv;
+        this.constr = constr;
     }
 
-    public PSet<V> get(String name) {
+    public PSet<V> getPubPriv(String name) {
         Entry<String, PSet<V>> pubEntry = pub.getEntry(name);
         Entry<String, PSet<V>> privEntry = priv.getEntry(name);
         if (pubEntry==null && privEntry==null) return EmptySet.create();
@@ -48,31 +49,29 @@ public class NameVisibilityIndex<V> {
         if (privEntry==null) return pubEntry.getValue();
         return pub.getEntry(name).getValue().append(priv.getEntry(name).getValue());
     }
-    
-    public PSet<V> subPublic() {
+
+    /*public PSet<V> subPublic() {
         if (pubSet!=null) return pubSet;
         PSet newSet = EmptySet.create();
         for (PSet set : pub) newSet = newSet.append(set);
         return pubSet = newSet;
-    }
+    }*/
 
     public NameVisibilityIndex plus(String name, List<V> publics, List<V> privates) {
         PSet set = SetCreator.create(publics);
         Hamt newPub = set.isEmpty()? pub : pub.plus(name,set);
         set = SetCreator.create(privates);
         Hamt newPriv = set.isEmpty()? priv : priv.plus(name,set);
-        return new NameVisibilityIndex<>(newPub, newPriv);
+        if (newPub == pub && newPriv == priv) return this;
+        return new NameVisibilityIndex<>(newPub, newPriv, constr);
     }
 
-    public NameVisibilityIndex<V> merge(List<NameVisibilityIndex<V>> mergeList) {
-        if (mergeList.isEmpty()) return this;
-        Hamt newPub = pub;
-        Hamt newPriv = priv;
-        for (NameVisibilityIndex nvi : mergeList) {
-            newPub = newPub.merge(nvi.pub);
-            newPriv = newPriv.merge(nvi.priv);
-        }
-        if (newPub==pub && newPriv==priv) return this;
-        return new NameVisibilityIndex(newPub, newPriv);
+    public NameVisibilityIndex<V> merge(NameVisibilityIndex<V> other) {
+        if (other==EMPTY) return this;
+        Hamt newPub = pub.merge(other.pub);
+        Hamt newPriv = priv.merge(other.priv);
+        PSet newConstr = constr.append(other.constr);
+        if (newPub==pub && newPriv==priv && newConstr==constr) return this;
+        return new NameVisibilityIndex(newPub, newPriv, newConstr);
     }
 }

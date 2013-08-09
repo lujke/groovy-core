@@ -15,6 +15,9 @@
  */
 package groovy.mop.internal;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+
 import groovy.mop.Realm;
 import groovy.mop.MetaClass;
 
@@ -28,7 +31,7 @@ public class DefaultRealm implements Realm {
     }
 
     private final String name; 
-    
+
     private final ClassValue<MCRef> cv = new ClassValue() {
         @Override
         protected MCRef computeValue(Class type) {
@@ -37,20 +40,20 @@ public class DefaultRealm implements Realm {
             return new MCRef(mc);
         }
     };
-    
+
     private DefaultRealm(String name) {
         this.name = name;
     }
 
     @Override
     public MetaClass getMetaClass(Class<?> theClass) {
-        return new MetaClassHandle(getMetaClassInternal(theClass));
+        return new PublicMetaClassInterface(getMetaClassInternal(theClass));
     }
-    
+
     public DefaultMetaClass getMetaClassInternal(Class<?> theClass) {
         return cv.get(theClass).mc;
     }
-    
+
     public void setMetaClassInternal(DefaultMetaClass mc) {
         cv.get(mc.getTheClass()).mc = mc;
     }
@@ -58,9 +61,16 @@ public class DefaultRealm implements Realm {
     public static DefaultRealm getRoot() {
         return ROOT;
     }
-    
+
     @Override
     public String toString() {
         return "Realm "+name;
+    }
+
+    public MetaClassRef getMetaClassHandleReferece(Class<?> theClass) {
+        DefaultMetaClass mc = getMetaClassInternal(theClass);
+        //TODO: add switchpoints
+        MethodHandle handle = MethodHandles.constant(DefaultMetaClass.class, mc);
+        return new MetaClassRef(handle);
     }
 }

@@ -29,10 +29,10 @@ import groovy.mop.internal.pcollection.*;
  * @author <a href="mailto:blackdrag@gmx.org">Jochen "blackdrag" Theodorou</a>
  * @see MetaClass
  */
-public class MetaClassHandle implements MetaClass {
+public class PublicMetaClassInterface implements MetaClass {
     private final DefaultMetaClass metaClass;
     
-    MetaClassHandle(DefaultMetaClass mc) {
+    PublicMetaClassInterface(DefaultMetaClass mc) {
         this.metaClass = mc;
     }
 

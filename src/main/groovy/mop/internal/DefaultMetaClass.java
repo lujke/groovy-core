@@ -30,11 +30,12 @@ import static groovy.mop.internal.MetaClassHelper.*;
  * @see MetaClass
  */
 public class DefaultMetaClass {
-    
+
     // -------------  immutable values ----------
     private final Class<?> theClass;
     private final DefaultRealm realm;
 
+    private MetaClassRef[] dependencies;
     private NameVisibilityIndex<MetaProperty> properties = null;
     private NameVisibilityIndex<DefaultMetaMethod> methods = null;
 
@@ -42,33 +43,54 @@ public class DefaultMetaClass {
         this.theClass = theClass;
         this.realm = realm;
     }
-    
+
     // -------------------------------------------------------------------
     //          Methods for interfacing with MetaClassHandle
     // -------------------------------------------------------------------
 
     public PSet<MetaProperty> getProperties(Class view, String name) {
         computeProperties();
-        return properties.get(name);
+        return properties.getPubPriv(name);
     }
 
     public PSet<DefaultMetaMethod> getMethods(Class view, String name) {
         NameVisibilityIndex<DefaultMetaMethod> index = getMethodIndex();
-        PSet<DefaultMetaMethod> methods = index.get(name);
+        PSet<DefaultMetaMethod> methods = index.getPubPriv(name);
+        for (MetaClassRef handle : getDependencies()) {
+            methods = methods.append(handle.getRef().getMethods(view, name));
+        }
         return methods;
     }
-    
     public Class<?> getTheClass() {
         return theClass;
     }
-    
+
     // -------------------------------------------------------------------
+
+    private MetaClassRef[] getDependencies() {
+        if (dependencies!=null) return dependencies;
+        LinkedList<MetaClassRef> l = new LinkedList();
+        //TODO: maybe save information that this is an interface in meta class itself, instead of always asking here
+        if (theClass!=Object.class && !theClass.isInterface()) {
+            MetaClassRef ref = realm.getMetaClassHandleReferece(theClass.getSuperclass());
+            l.add(ref);
+        }
+        //TODO: add outer classes too!
+        for (Class<?> ci : theClass.getInterfaces()) {
+            MetaClassRef ref = realm.getMetaClassHandleReferece(ci);
+            l.add(ref);
+        }
+        //TODO: use constant for array
+        MetaClassRef[] res = l.toArray(new MetaClassRef[0]);
+        dependencies = res;
+        return res;
+    }
 
     public void computeProperties() {
         if (properties!=null) return;
         //properties = PropertyHelper.createIndex(theClass, realm);
     }
-    
+
     public NameVisibilityIndex<DefaultMetaMethod> getMethodIndex() {
         if (methods!=null) return methods;
         methods = MethodHelper.createIndex(this);
@@ -88,7 +110,7 @@ public class DefaultMetaClass {
         PSet<DefaultMetaMethod> methods = getMethods(call.baseClass, call.name);
         setCallTargetWithDistanceCalculator(methods,call);
     }
-    
+
     private void setCallTargetWithDistanceCalculator(PSet<DefaultMetaMethod> methods, MOPCall call) {
         long savedDistance = Long.MAX_VALUE;
         DefaultMetaMethod ret = null;
@@ -124,7 +146,7 @@ public class DefaultMetaClass {
     private void transformHandleForTypes(MOPCall call, DefaultMetaMethod ret) {
         call.target = ret.getTarget();
     }
-    
+
     /*
 
     @Override
@@ -140,7 +162,7 @@ public class DefaultMetaClass {
         Class[] types = convertToTypeArray(arguments);
         return getMetaMethods(name, types);
     }
-    
+
 
     private static MethodHandle unreflect(Method m) {
         try {
@@ -188,7 +210,7 @@ public class DefaultMetaClass {
     }
 
 */
-    
+
     @Override
     public String toString() {
         return "MetaClass(realm:"+getRealm()+",class:"+theClass.getName()+")";

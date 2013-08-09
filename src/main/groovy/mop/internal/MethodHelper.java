@@ -27,33 +27,11 @@ public class MethodHelper<T> {
      * { DefaultMetaMethod old, DefaultMetaMethod new ->
      *   old.signature == new.signature
      * }
-     */
+     
     private final static MethodHandle equalTypesFilter = null;
+    */
     private final static Lookup LOOKUP = MethodHandles.lookup();
 
-    
-    private static DefaultMetaClass[] createParents(DefaultRealm realm, Class<?> theClass) {
-        Class sc = theClass.getSuperclass();
-        Class[] interfaces = theClass.getInterfaces();
-        DefaultMetaClass[] mint;
-        if (sc==null) {
-            mint = new DefaultMetaClass[interfaces.length];
-        } else {
-            DefaultMetaClass superClass = realm.getMetaClassInternal(theClass.getSuperclass());
-            mint = new DefaultMetaClass[interfaces.length+1];
-            mint[interfaces.length] = superClass;
-        }
-        for (int i=0; i<interfaces.length; i++) {
-            mint[i] = realm.getMetaClassInternal(interfaces[i]);
-        }
-        return mint;
-    }
-    
-    private static NameVisibilityIndex<DefaultMetaMethod> fromSuper(DefaultMetaClass[] superClasses) {
-        if (superClasses.length==0) return NameVisibilityIndex.EMPTY;
-        return superClasses[0].getMethodIndex();
-    }
-    
     private static NameVisibilityIndex<DefaultMetaMethod> makeIndexFromClass(Class<?> theClass) {
         // add public and private methods into this
         Method[] declaredMethods = theClass.getDeclaredMethods();
@@ -116,34 +94,11 @@ public class MethodHelper<T> {
 
     public static NameVisibilityIndex<DefaultMetaMethod> createIndex(DefaultMetaClass metaClass) {
         Class<?> theClass = metaClass.getTheClass();
-        DefaultRealm realm = metaClass.getRealm();
-        DefaultMetaClass[] parents = createParents(realm, theClass);
-        
-        // first we build the set of inheritable methods
-        NameVisibilityIndex<DefaultMetaMethod> inheritedMethods = fromSuper(parents);
 
-        // next we set the overrides coming from the class
         NameVisibilityIndex<DefaultMetaMethod> methodsFromClass = makeIndexFromClass(theClass);
-
-        // get extension methods for each interface and current class,
-        // first interfaces, then the class itself. Extensions for 
-        // super are already done in the parent MetaClass
-        LinkedList<NameVisibilityIndex<DefaultMetaMethod>> interfaceExtensions = new LinkedList();
-        for (int i=1; i<parents.length; i++) {
-            NameVisibilityIndex ext = parents[i].getExtensions();
-            if (ext == NameVisibilityIndex.EMPTY) continue;
-            interfaceExtensions.add(ext);
-        }
         NameVisibilityIndex<DefaultMetaMethod> theClassExtensions = metaClass.getExtensions(); 
 
-        // Groovy override rules are as follows:
-        //  * extensions from interfaces hide super class methods
-        //  * current class methods hide super class and interface methods
-        //  * current class extension method hide current class methods
-        LinkedList mergeList = interfaceExtensions;
-        if (inheritedMethods!=NameVisibilityIndex.EMPTY)    mergeList.addFirst(inheritedMethods);
-        if (methodsFromClass!=NameVisibilityIndex.EMPTY)    mergeList.add(methodsFromClass);
-        if (theClassExtensions!=NameVisibilityIndex.EMPTY)  mergeList.add(theClassExtensions);
-        return NameVisibilityIndex.EMPTY.merge(mergeList);
+        //  current class extension method hide current class methods
+        return methodsFromClass.merge(theClassExtensions);
     }
 }

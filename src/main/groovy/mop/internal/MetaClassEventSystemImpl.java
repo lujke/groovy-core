@@ -55,7 +55,7 @@ public class MetaClassEventSystemImpl extends MetaClassEventSystem {
     protected static void fireMetaClassCreation(DefaultRealm realm, DefaultMetaClass dmc) {
         MetaClassEventSystemImpl sys = (MetaClassEventSystemImpl) MetaClassEventSystem.getInstance();
         if (sys.creationListener.isEmpty()) return;
-        MetaClass mc = new MetaClassHandle(dmc);
+        MetaClass mc = new PublicMetaClassInterface(dmc);
         MetaClassCreationEvent event = new MetaClassCreationEvent(realm, mc);
         synchronized (sys) {
             for (SoftReference<MetaClassCreationEventListener> ref : sys.creationListener) {
