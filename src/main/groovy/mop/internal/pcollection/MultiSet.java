@@ -46,7 +46,7 @@ public final class MultiSet<T> implements PSet<T> {
         
         public Iter(MultiSet<E> start) {
             current = start;
-            iter = start.iterator();
+            iter = current.object.iterator();
         }
         
         @Override

@@ -180,7 +180,7 @@ public class Hamt<K,V>  implements Iterable<V> {
             this.bitmap = bitmap;
         }
         @Override
-        public Entry getChild(int index) {
+        public Node getChild(int index) {
             // get a number with 1 bit set for the index in the bitmap
             // the child exists iff bitmap&mapIndex!=0
             int mapIndex = 1 << index;
@@ -189,7 +189,7 @@ public class Hamt<K,V>  implements Iterable<V> {
             // to get those bits we use mapIndex-1 as mask (all bits set to 
             // the right)
             int childIndex = Integer.bitCount(bitmap & (mapIndex-1));
-            return (Entry) array[childIndex];
+            return array[childIndex];
         }
         @Override
         public Node replace(int hashCode, int level, Node newEntry, Node oldEntry) {
@@ -384,18 +384,7 @@ public class Hamt<K,V>  implements Iterable<V> {
         // we build up a new trie containing all the old nodes,
         // that are not changed plus new nodes for the path elements
         Node lastNode = path[lastPathEntry];
-        boolean handled = false;
-        Node newRoot = null;
-        if (lastPathEntry>0) {
-            Node parent = path[lastPathEntry-1];
-            if (!parent.isFullNode()) {
-                lastPathEntry--;
-                lastNode = parent;
-                handled = true;
-                newRoot = lastNode.merge(newNode, lastPathEntry);
-            }
-        } 
-        if (!handled) newRoot = lastNode.plus(hash, lastPathEntry, newNode);
+        Node newRoot = lastNode.plus(hash, lastPathEntry, newNode);
         lastPathEntry--;
 
         Node lastElement = lastNode;
