@@ -25,7 +25,6 @@ package groovy.lang;
 
 import org.codehaus.groovy.ast.ClassNode;
 import org.codehaus.groovy.ast.ModuleNode;
-import org.codehaus.groovy.classgen.Verifier;
 import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.runtime.IOGroovyMethods;
 import org.objectweb.asm.ClassVisitor;
@@ -768,7 +767,9 @@ public class GroovyClassLoader extends URLClassLoader {
      * @return the time stamp
      */
     protected long getTimeStamp(Class cls) {
-        return Verifier.getTimestamp(cls);
+        //TODO: have to find replacement !
+        return Long.MAX_VALUE;
+//        return Verifier.getTimestamp(cls);
     }
 
     /**

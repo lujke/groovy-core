@@ -238,19 +238,11 @@ public class ClassNodeResolver {
     }
 
     /**
-     * get the time stamp of a class
-     * NOTE: copied from GroovyClassLoader
-     */
-    private long getTimeStamp(Class cls) {
-        return Verifier.getTimestamp(cls);
-    }
-
-    /**
      * returns true if the source in URL is newer than the class
      * NOTE: copied from GroovyClassLoader
      */
     private boolean isSourceNewer(URL source, Class cls) {
-        try {
+        /*try {
             long lastMod;
 
             // Special handling for file:// protocol, as getLastModified() often reports
@@ -269,6 +261,7 @@ public class ClassNodeResolver {
         } catch (IOException e) {
             // if the stream can't be opened, let's keep the old reference
             return false;
-        }
+        }*/
+        return false;
     }
 }

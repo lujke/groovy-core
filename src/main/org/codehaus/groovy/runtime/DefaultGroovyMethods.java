@@ -12008,14 +12008,14 @@ public class DefaultGroovyMethods extends DefaultGroovyMethodsSupport {
     }
 
     private static void disablePrimitiveOptimization(Object self) {
-        Field sdyn;
+        /*Field sdyn;
         Class c = self.getClass();
         try {
             sdyn = c.getDeclaredField(Verifier.STATIC_METACLASS_BOOL);
             sdyn.setBoolean(null, true);
         } catch (Throwable e) {
             //DO NOTHING
-        }
+        }*/
     }
 
     /**

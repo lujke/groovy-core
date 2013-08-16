@@ -111,11 +111,11 @@ public class OptimizingStatementWriter extends StatementWriter {
         
         // meta class check with boolean holder
         String owner = BytecodeHelper.getClassInternalName(controller.getClassNode());
-        MethodNode mn = controller.getMethodNode();
+        /*MethodNode mn = controller.getMethodNode();
         if (mn!=null) {
             mv.visitFieldInsn(GETSTATIC, owner, Verifier.STATIC_METACLASS_BOOL, "Z");
             mv.visitJumpInsn(IFNE, slowPath);
-        }
+        }*/
         
         //standard metaclass check
         disabledStandardMetaClass.call(mv);
