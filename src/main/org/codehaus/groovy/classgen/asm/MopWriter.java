@@ -63,7 +63,7 @@ public class MopWriter {
             return;
         }
         visitMopMethodList(classNode.getMethods(), true);
-        visitMopMethodList(classNode.getSuperClass().getAllDeclaredMethods(), false);
+        //visitMopMethodList(classNode.getSuperClass().getAllDeclaredMethods(), false);
     }
     
     /**
