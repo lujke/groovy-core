@@ -24,6 +24,7 @@ import org.codehaus.groovy.ast.ClassHelper;
 import org.codehaus.groovy.ast.ClassNode;
 import org.codehaus.groovy.ast.MethodNode;
 import org.codehaus.groovy.ast.Parameter;
+import org.dynalang.dynalink.support.NameCodec;
 import org.objectweb.asm.MethodVisitor;
 
 import static org.objectweb.asm.Opcodes.*;
@@ -115,11 +116,7 @@ public class MopWriter {
      */
     public static String getMopMethodName(MethodNode method, boolean useThis) {
         ClassNode declaringNode = method.getDeclaringClass();
-        int distance = 0;
-        for (; declaringNode != null; declaringNode = declaringNode.getSuperClass()) {
-            distance++;
-        }
-        return (useThis ? "this" : "super") + "$" + distance + "$" + method.getName();
+        return (useThis ? "this" : "super") + "$" + NameCodec.encode(declaringNode.getName()) + "$" + method.getName();
     }
 
     /**
