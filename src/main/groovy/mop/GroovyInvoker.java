@@ -18,6 +18,7 @@ package groovy.mop;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.Map;
 
 import groovy.mop.internal.*;
 
@@ -52,8 +53,7 @@ import org.codehaus.groovy.runtime.NullObject;
  */
 public final class GroovyInvoker {
     private static final MethodType INVOKE_EXACT_TYPE = MethodType.methodType(Object.class,MethodHandle.class,Object.class,Object[].class);
-    
-    
+
     /** 
      * Invokes a method.
      * @param receiver - the object the method is invoked on
@@ -62,21 +62,11 @@ public final class GroovyInvoker {
      * @return - the result of the method call
      */
     public static <R> R invoke(Object receiver, String name, Object... args) {
-       DefaultRealm realm = DefaultRealm.getRoot();
-       Class c = null;
-       if (receiver instanceof Class) {
-           c = (Class) receiver;
-       } else if (receiver != null) {
-           c = receiver.getClass();
-       } else {
-           c = NullObject.class;
-       }
-       MOPCall call = new MOPCall(c,receiver,name,args);
-       realm.getMetaClassInternal(c).selectMethod(call);
-       MethodHandle mh = MethodHandles.spreadInvoker(call.target.type(), call.args.length+1);
+       MethodHandle target = getMethodHandle(receiver, name, args);
+       MethodHandle mh = MethodHandles.spreadInvoker(target.type(), args.length+1);
        mh = MethodHandles.explicitCastArguments(mh, INVOKE_EXACT_TYPE);
        try {
-           return (R) mh.invokeExact(call.target, call.receiver, args);
+           return (R) mh.invokeExact(target, receiver, args);
        } catch (Throwable e) {
            Unchecked.rethrow(e);
            return null;
@@ -111,5 +101,69 @@ public final class GroovyInvoker {
         private static <T extends Throwable> void thrownInsteadOf(Throwable t) throws T {
             throw (T) t;
         }
+    }
+
+    public static MethodHandle getMethodHandle(Object receiver, String name, Object... args) {
+        DefaultRealm realm = DefaultRealm.getRoot();
+        Class c = null;
+        if (receiver instanceof Class) {
+            c = (Class) receiver;
+        } else if (receiver != null) {
+            c = receiver.getClass();
+        } else {
+            c = NullObject.class;
+        }
+        MOPCall call = new MOPCall(c,receiver,name,args);
+        realm.getMetaClassInternal(c).selectMethod(call);
+        return call.target;
+    }
+
+    public static void setProperty(Script script, String string, String[] args) {
+        // TODO TBD
+
+    }
+
+    public static Script createScript(Class scriptClass, Binding context) {
+        Script script = null;
+        // for empty scripts
+        if (scriptClass == null) {
+            script = new Script() {
+                public Object run() {
+                    return null;
+                }
+            };
+        } else {
+            final Object object = newInstance(scriptClass);
+            if (object instanceof Script) {
+                script = (Script) object;
+            } else {
+                // it could just be a class, so lets wrap it in a Script
+                // wrapper
+                // though the bindings will be ignored
+                script = new Script() {
+                    public Object run() {
+                        Object args = getBinding().getVariables().get("args");
+                        if (args != null && args instanceof String[]) {
+                            GroovyInvoker.invoke(object, "main", args);
+                        } else {
+                            GroovyInvoker.invoke(object, "main");
+                        }
+                        return null;
+                    }
+                };
+                setProperties(object, context.getVariables());
+            }
+        }
+        script.setBinding(context);
+        return script;
+    }
+
+    public static void setProperties(Object receiver, Map<String,?> propertyValues) {
+        //TODO: TBD
+    }
+
+    public static <T> T newInstance(Class<T> clazz) {
+      //TODO: TBD
+        return null;
     }
 }

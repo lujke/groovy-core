@@ -14,6 +14,7 @@
  */
 package groovy.mop.internal;
 
+import java.lang.invoke.MethodHandle;
 import java.util.LinkedList;
 
 import groovy.mop.*;
@@ -214,6 +215,11 @@ public class DefaultMetaClass {
     @Override
     public String toString() {
         return "MetaClass(realm:"+getRealm()+",class:"+theClass.getName()+")";
+    }
+
+    //TODO: TBD
+    public MethodHandle selectGetter(Script script, String string) {
+        return null;
     }
 
 }
