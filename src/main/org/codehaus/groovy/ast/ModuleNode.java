@@ -284,12 +284,14 @@ public class ModuleNode extends ASTNode implements Opcodes {
             new MethodNode("run", ACC_PUBLIC, ClassHelper.OBJECT_TYPE, Parameter.EMPTY_ARRAY, ClassNode.EMPTY_ARRAY, statementBlock));
 
         classNode.addConstructor(ACC_PUBLIC, Parameter.EMPTY_ARRAY, ClassNode.EMPTY_ARRAY, new BlockStatement());
-        Statement stmt = new ExpressionStatement(
-                        new MethodCallExpression(
-                            new VariableExpression("super"),
-                            "setBinding",
-                            new ArgumentListExpression(
-                                        new VariableExpression("context"))));
+        MethodCallExpression setBinding = new MethodCallExpression(
+                VariableExpression.SUPER_EXPRESSION,
+                "setBinding",
+                new ArgumentListExpression(new VariableExpression("context")));
+        setBinding.setMethodTarget(
+                ClassHelper.SCRIPT_TYPE.getMethod("setBinding", 
+                        new Parameter[]{new Parameter(ClassHelper.make(Binding.class),"binding")}));
+        Statement stmt = new ExpressionStatement(setBinding);
 
         classNode.addConstructor(
             ACC_PUBLIC,
