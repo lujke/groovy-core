@@ -30,7 +30,7 @@ import org.codehaus.groovy.runtime.NullObject;
  * if the groovy generated class and none of its super classes 
  * can be utilized for it.
  * <p>
- * Some defintions:
+ * Some definitions:
  * <dl>
  * <dt>receiver</dt>
  * <dd>A receiver is what we will use to call the method on. 
@@ -62,15 +62,15 @@ public final class GroovyInvoker {
      * @return - the result of the method call
      */
     public static <R> R invoke(Object receiver, String name, Object... args) {
-       MethodHandle target = getMethodHandle(receiver, name, args);
-       MethodHandle mh = MethodHandles.spreadInvoker(target.type(), args.length+1);
-       mh = MethodHandles.explicitCastArguments(mh, INVOKE_EXACT_TYPE);
-       try {
-           return (R) mh.invokeExact(target, receiver, args);
-       } catch (Throwable e) {
-           Unchecked.rethrow(e);
-           return null;
-       }
+        MethodHandle target = getMethodHandle(receiver, name, args);
+        MethodHandle mh = MethodHandles.spreadInvoker(target.type(), args.length+1);
+        mh = MethodHandles.explicitCastArguments(mh, INVOKE_EXACT_TYPE);
+        try {
+            return (R) mh.invokeExact(target, receiver, args);
+        } catch (Throwable e) {
+            Unchecked.rethrow(e);
+            return null;
+        }
     }
 
     public static <R> R invoke(MethodHandle mh, Object... args) {
