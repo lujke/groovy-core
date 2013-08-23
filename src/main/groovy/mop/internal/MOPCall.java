@@ -27,12 +27,24 @@ public class MOPCall {
     public Class[] types;
     public MethodHandle target;
 
-    public MOPCall(Class baseClass, Object receiver, String name, Object[] args) {
+    public MOPCall(Class baseClass, String name, Object[] args) {
         this.name = name;
-        this.baseClass = baseClass;
-        this.receiver = receiver;
+        this.receiver = args[0];
         this.args = args;
+        this.baseClass = baseClass;
         this.types = MetaClassHelper.convertToTypeArray(args);
+    }
+
+    private static Object[] rewrap(Object receiver, Object[] args) {
+        Object[] newArgs = new Object[args.length+1];
+        newArgs[0] = receiver;
+        System.arraycopy(args, 0, newArgs, 1, args.length);
+        return newArgs;
+    }
+
+    //TODO: maybe remove this constructor
+    public MOPCall(Class baseClass, Object receiver, String name, Object[] args) {
+        this(baseClass, name, rewrap(receiver,args)); 
     }
 
 }

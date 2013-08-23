@@ -380,7 +380,7 @@ public abstract class Selector {
          * MetaMethod itself for invocation.
          */
         public void setHandleForMetaMethod() {
-            MOPCall call = new MOPCall(selectionBase,args[0],name,args);
+            MOPCall call = new MOPCall(selectionBase,name,args);
             mc.selectMethod(call);
             handle = call.target;
         }
