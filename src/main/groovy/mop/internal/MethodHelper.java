@@ -15,6 +15,9 @@
  */
 package groovy.mop.internal;
 
+import groovy.mop.internal.pcollection.PSet;
+import groovy.mop.internal.pcollection.SetCreator;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -90,6 +93,43 @@ public class MethodHelper<T> {
             // or create a handle, which will produce an error if called.
             return null;
         }
+    }
+
+    private static MethodHandle unreflect(Constructor c) {
+        try {
+            return LOOKUP.unreflectConstructor(c);
+        } catch (IllegalAccessException e) {
+            // TODO:ignore method?
+            // on some systems like for example GAE the method
+            // might be in general blocked. We can either ignore it (current solution)
+            // or create a handle, which will produce an error if called.
+            return null;
+        }
+    }
+
+    public static void initConstructors(DefaultMetaClass mc) {
+        // add public and private methods into this
+        Constructor[] constructors = mc.getTheClass().getConstructors();
+        AccessibleObject.setAccessible(constructors, true);
+
+        LinkedList<DefaultMetaMethod> priv = new LinkedList();
+        LinkedList<DefaultMetaMethod> pub = new LinkedList();
+
+        for (Constructor m : constructors) {
+            MethodHandle mh = unreflect(m);
+            if (mh==null) continue; //TODO: see comment in unreflect method
+            mh = MethodHandles.dropArguments(mh, 0, Object.class);
+            DefaultMetaMethod dmm = new DefaultMetaMethod(m.getName(), m.getModifiers(), mh);
+
+            if (Modifier.isPrivate(m.getModifiers())) {
+                priv.add(dmm);
+            } else {
+                pub.add(dmm);
+            }
+        }
+        mc.publicConstructors = SetCreator.create(pub);
+        PSet<DefaultMetaMethod> privSet = SetCreator.create(priv);
+        mc.constructors = privSet.append(mc.publicConstructors);
     }
 
     public static NameVisibilityIndex<DefaultMetaMethod> createIndex(DefaultMetaClass metaClass) {

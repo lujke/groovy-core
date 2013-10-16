@@ -265,6 +265,11 @@ public abstract class Selector {
                 handle = MethodHandles.dropArguments(handle, 0, Class.class);
             }
         }*/
+        public void setHandleForMetaMethod() {
+            MOPCall call = new MOPCall(selectionBase,name,args);
+            mc.selectNewInstanceConstructor(call);
+            handle = call.target;
+        }
 
         /**
          * In case of a bean constructor we don't do any varags or implicit null argument 

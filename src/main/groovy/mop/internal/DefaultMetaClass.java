@@ -15,6 +15,8 @@
 package groovy.mop.internal;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
+import java.util.Arrays;
 import java.util.LinkedList;
 
 import groovy.mop.*;
@@ -39,6 +41,8 @@ public class DefaultMetaClass {
     private MetaClassRef[] dependencies;
     private NameVisibilityIndex<MetaProperty> properties = null;
     private NameVisibilityIndex<DefaultMetaMethod> methods = null;
+    /*package private*/ PSet<DefaultMetaMethod> 
+            publicConstructors = null, constructors = null;
 
     public DefaultMetaClass(DefaultRealm realm, Class<?> theClass) {
         this.theClass = theClass;
@@ -107,9 +111,29 @@ public class DefaultMetaClass {
         return NameVisibilityIndex.EMPTY;
     }
 
+    public void selectThisConstructor(MOPCall call) {
+        if (publicConstructors==null) MethodHelper.initConstructors(this);
+        setCallTargetWithDistanceCalculator(constructors, call);
+    }
+
+    public void selectNewInstanceConstructor(MOPCall call) {
+        if (publicConstructors==null) MethodHelper.initConstructors(this);
+        setCallTargetWithDistanceCalculator(publicConstructors, call);
+    }
+
+
     public void selectMethod(MOPCall call) {
         PSet<DefaultMetaMethod> methods = getMethods(call.baseClass, call.name);
-        setCallTargetWithDistanceCalculator(methods,call);
+        setCallTargetWithDistanceCalculator(methods, call);
+    }
+
+    private boolean isNotProvided(MethodType[] provided, Class[] params) {
+        if (provided==null) return false;
+        for (MethodType mt : provided) {
+            Class[] providedParams = mt.parameterArray();
+            if (Arrays.equals(providedParams, params)) return false;
+        }
+        return true;
     }
 
     private void setCallTargetWithDistanceCalculator(PSet<DefaultMetaMethod> methods, MOPCall call) {
@@ -124,6 +148,7 @@ public class DefaultMetaClass {
                 transformHandleForTypes(call, mm);
                 return;
             }
+            if (isNotProvided(call.provided, mm.getParameterClasses())) continue;
             if (distance<savedDistance) {
                 errorList = null;
                 savedDistance = distance;
